@@ -34,9 +34,14 @@ export function apply(ctx: any): void {
     description: 'Compare two supplied workspace snapshot JSON objects and emit a deterministic attestation.',
     recordInput: false,
     async handler(invocation: any) {
-      const raw = String(invocation.args?.join(' ') ?? '').trim()
+      const raw = String(invocation.rawInput ?? '').trim()
       if (!raw) return { kind: 'error', text: 'usage: /change-attest {"before":...,"after":...,"observedActionIds":[]}' }
-      const input = JSON.parse(raw) as { before: Snapshot; after: Snapshot; observedActionIds?: string[] }
+      let input: { before: Snapshot; after: Snapshot; observedActionIds?: string[] }
+      try {
+        input = JSON.parse(raw) as typeof input
+      } catch {
+        return { kind: 'error', text: 'change-attest expects a single JSON object with before/after snapshots' }
+      }
       return { kind: 'success', text: JSON.stringify(attestChanges(input.before, input.after, input.observedActionIds ?? []), null, 2) }
     },
   })

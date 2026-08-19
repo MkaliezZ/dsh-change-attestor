@@ -24,3 +24,22 @@ test('observed action ids are references not causation claims', () => {
   assert.deepEqual(r.observedActionIds, ['call-1'])
   assert.equal('causedBy' in r, false)
 })
+
+test('change-attest command accepts a JSON payload via rawInput', async () => {
+  const commands: Record<string, (invocation: { rawInput?: string }) => Promise<{ kind: string; text: string }>> = {}
+  const { apply } = await import('../src/index.js')
+  apply({ commands: { register: (d: { name: string; handler: unknown }) => { commands[d.name] = d.handler as never } } })
+  const result = await commands['change-attest']!({ rawInput: JSON.stringify({ before: { files: { 'a.txt': 'v1' } }, after: { files: { 'a.txt': 'v2' } } }) })
+  assert.equal(result.kind, 'success')
+  const parsed = JSON.parse(result.text)
+  assert.deepEqual(parsed.modified, ['a.txt'])
+  assert.match(parsed.digest, /^[0-9a-f]{64}$/)
+})
+
+test('change-attest command reports malformed JSON gracefully', async () => {
+  const commands: Record<string, (invocation: { rawInput?: string }) => Promise<{ kind: string; text: string }>> = {}
+  const { apply } = await import('../src/index.js')
+  apply({ commands: { register: (d: { name: string; handler: unknown }) => { commands[d.name] = d.handler as never } } })
+  const result = await commands['change-attest']!({ rawInput: 'not-json' })
+  assert.equal(result.kind, 'error')
+})
