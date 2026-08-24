@@ -1,3 +1,4 @@
-- id: dsh-change-attestor
-  name: '@mkaliezz/dsh-change-attestor'
-  config: {}
+- insert:
+    - id: dsh-change-attestor
+      name: '@mkaliezz/dsh-change-attestor'
+      config: {}
